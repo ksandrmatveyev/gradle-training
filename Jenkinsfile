@@ -26,7 +26,7 @@ def depTom(inst,adr,pvers){
 node{
     deleteDir()
     stage('cloneRepo'){
-        git branch: 'task3', credentialsId: '2e21e2cc-a7b2-4657-85d6-7f867b231080', url: 'https://github.com/ksandrmatveyev/devops_training.git'
+        git branch: 'task3', credentialsId: '2e21e2cc-a7b2-4657-85d6-7f867b231080', url: 'https://github.com/ksandrmatveyev/gradle-training.git'
     }
     stage('buildIncVersion'){
         sh('chmod +x gradlew && ./gradlew setBuildVersion && ./gradlew build')
@@ -38,7 +38,7 @@ node{
             sh('git config --global user.name "Aleksandr Matveyev"')
             sh('git config --global user.email ksandr.matveyev@gmail.com')
             sh("git commit -am \"from Jenkins. Build - ${vers}\"")
-            sh('git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/ksandrmatveyev/devops_training.git task3')
+            sh('git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/ksandrmatveyev/gradle-training.git task3')
         }
     }
     stage('publishToNexus'){
