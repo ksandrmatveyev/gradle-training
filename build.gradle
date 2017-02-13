@@ -11,7 +11,7 @@ dependencies{
 }
 
 war {
-	archiveName 'task3.war'
+	archiveName 'task4.war'
 }
 
 
