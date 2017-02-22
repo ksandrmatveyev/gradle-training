@@ -1,0 +1,13 @@
+{
+   "name": "rcontainer",
+   "default_attributes": {
+   },
+   "json_class": "Chef::Role",
+   "run_list": ["role[docker]",
+                "recipe[run_container::default]"
+   ],
+   "description": "Run task4 container from local registry",
+   "chef_type": "role",
+   "override_attributes": {
+   }
+}
