@@ -51,5 +51,5 @@ ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 .chef
-cookbooks/starter/
-roles/starter.rb
+*/starter/
+*/starter.rb
