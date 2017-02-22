@@ -8,14 +8,11 @@
 .rbenv-version
 
 # Emacs
-*~
-\#*\#
 /.emacs.desktop
 /.emacs.desktop.lock
 .elc
 auto-save-list
 tramp
-.\#*
 
 # Emacs org-mode
 .org-id-locations
@@ -34,7 +31,6 @@ tmtags
 *.un~
 Session.vim
 .netrwhist
-*~
 
 # OS X
 .DS_Store
