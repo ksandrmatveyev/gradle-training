@@ -31,6 +31,10 @@ sudo /bin/systemctl enable grafana-server.service &&\
 sudo /bin/systemctl start grafana-server.service
 SCRIPT
 
+$stress = <<SCRIPT
+sudo rpm -ivh https://dl.fedoraproject.org/pub/epel/6/x86_64/stress-1.0.4-4.el6.x86_64.rpm
+SCRIPT
+
 
 Vagrant.configure("2") do |config|
 	config.vm.box = "bertvv/centos72"
@@ -44,6 +48,7 @@ Vagrant.configure("2") do |config|
 		node1.vm.provision "run_install_collectd", type: "shell", inline: $collectd
 		node1.vm.provision "configuring_manually_collectd", type: "shell", inline: "echo 'configure collectd: Uncommenting network plugin and setup settings to influxdb server, restart collectd'"
 		node1.vm.provision "configuring_collectd", type: "shell", inline: $configure_collectd
+		node1.vm.provision "install_stress", type: "shell", inline: $stress
 	end
 
 	config.vm.define "node2" do |node2|
@@ -53,6 +58,7 @@ Vagrant.configure("2") do |config|
 		node2.vm.provision "run_install_collectd", type: "shell", inline: $collectd
 		node2.vm.provision "configuring_manually_collectd", type: "shell", inline: "echo 'configure collectd: Uncommenting network plugin and setup settings to influxdb server, restart collectd'"
 		node2.vm.provision "configuring_collectd", type: "shell", inline: $configure_collectd
+		node2.vm.provision "install_stress", type: "shell", inline: $stress
 	end
 
 	config.vm.define "monitoring" do |monitoring|
