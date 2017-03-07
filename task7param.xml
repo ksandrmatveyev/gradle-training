@@ -49,7 +49,7 @@ return rolslist.execute().text.tokenize()</script>
         <com.seitenbau.jenkins.plugins.dynamicparameter.StringParameterDefinition plugin="dynamicparameter@0.2.0">
           <name>VRS</name>
           <description>Version</description>
-          <__uuid>3791bb40-d612-4a3a-8ab2-2873fc084107</__uuid>
+          <__uuid>6bdb708e-2986-42d4-bf48-3b76944e3da0</__uuid>
           <__remote>false</__remote>
           <__script></__script>
           <__localBaseDirectory serialization="custom">
@@ -111,7 +111,8 @@ node(&apos;master&apos;){
     }
     stage(&apos;Run Chef-client&apos;){
         withCredentials([usernamePassword(credentialsId: &apos;node_cred&apos;, passwordVariable: &apos;NODE_PASSWORD&apos;, usernameVariable: &apos;NODE_USERNAME&apos;)]) {
-            sh &quot;knife search \&quot;chef_environment:${ENVS} and role:${RLS}\&quot;&quot;
+            sh &quot;knife search \&quot;chef_environment:${ENVS} and role:${RLS}\&quot; -i&quot;
+            sh &quot;knife ssh \&quot;chef_environment:${ENVS} AND role:${RLS}\&quot; \&quot;sudo chef-client\&quot; -x ${NODE_USERNAME} -P ${NODE_PASSWORD}&quot;
         }
     }
 }</script>
