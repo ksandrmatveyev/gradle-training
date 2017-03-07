@@ -49,7 +49,7 @@ return rolslist.execute().text.tokenize()</script>
         <com.seitenbau.jenkins.plugins.dynamicparameter.StringParameterDefinition plugin="dynamicparameter@0.2.0">
           <name>VRS</name>
           <description>Version</description>
-          <__uuid>43c41b6e-9519-47e7-b0b5-3e5f888c324d</__uuid>
+          <__uuid>aa72133a-342d-405d-bec4-4eb8cd712095</__uuid>
           <__remote>false</__remote>
           <__script></__script>
           <__localBaseDirectory serialization="custom">
@@ -79,9 +79,9 @@ node(&apos;master&apos;){
         echo ENVS
         echo RLS
         echo VRS
-        sh &quot;knife search \&quot;chef_environment:_default and role:docker\&quot;&quot;
+        sh &quot;knife search \&quot;chef_environment:${ENVS} and role:${RLS}\&quot;&quot;
     }
-    stage(&apos;Update Files&apos;){
+    stage(&apos;Update Cookbook Files&apos;){
         sh &quot;sed -i &apos;/\&quot;run_container\&quot;:/c\\\&quot;run_container\&quot;: \&quot;= $VRS\&quot;&apos; /vagrant/chef-repo/environments/${ENVS}.json&quot;
         sh &quot;sed -i \&quot;/version /c\\version \&apos;\&quot;$VRS\&quot;\&apos;\&quot; /vagrant/chef-repo/cookbooks/run_container/metadata.rb&quot;
         sh &quot;sed -i \&quot;/image_version/c\\default[&apos;image_version&apos;]=\&apos;\&quot;$VRS\&quot;\&apos;\&quot; /vagrant/chef-repo/cookbooks/run_container/attributes/default.rb&quot;
@@ -89,11 +89,11 @@ node(&apos;master&apos;){
         sh &quot;cat /vagrant/chef-repo/cookbooks/run_container/metadata.rb&quot;
         sh &quot;cat /vagrant/chef-repo/cookbooks/run_container/attributes/default.rb&quot;
     }
-    stage(&apos;Update Chef&apos;){
+    stage(&apos;Update Chef-server&apos;){
         sh &quot;berks install -b /vagrant/chef-repo/cookbooks/run_container/Berksfile &amp;&amp; berks upload -b /vagrant/chef-repo/cookbooks/run_container/Berksfile&quot;
         sh &quot;knife environment from file /vagrant/chef-repo/environments/${ENVS}.json&quot;
     }
-    stage(&apos;Push Changes&apos;){
+    stage(&apos;Push to Github&apos;){
         withCredentials([usernamePassword(credentialsId: &apos;github_cred&apos;, passwordVariable: &apos;GIT_PASSWORD&apos;, usernameVariable: &apos;GIT_USERNAME&apos;)]) {
             git branch: &quot;${git_branch}&quot;, credentialsId: &apos;github_cred&apos;, url: &quot;https://github.com/${git_repo}&quot;
             withCredentials([usernamePassword(credentialsId: &apos;jenkins_cred&apos;, passwordVariable: &apos;JENKINS_PASSWORD&apos;, usernameVariable: &apos;JENKINS_USERNAME&apos;)]) {
@@ -104,6 +104,11 @@ node(&apos;master&apos;){
             sh(&apos;git config --global user.email ksandr.matveyev@gmail.com&apos;)
             sh(&quot;git add -A &amp;&amp; git commit -am \&quot;from Jenkins. Cookbook build - ${VRS}\&quot;&quot;)
             sh(&quot;git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${git_repo} ${git_branch}&quot;) 
+        }
+    }
+    stage(&apos;Run Chef-client&apos;){
+        withCredentials([usernamePassword(credentialsId: &apos;node_cred&apos;, passwordVariable: &apos;NODE_PASSWORD&apos;, usernameVariable: &apos;NODE_USERNAME&apos;)]) {
+            sh &quot;knife search \&quot;chef_environment:${ENVS} and role:${RLS}\&quot;&quot;
         }
     }
 }</script>
