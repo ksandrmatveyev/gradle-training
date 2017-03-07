@@ -1,0 +1,122 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.10">
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <org.biouno.unochoice.ChoiceParameter plugin="uno-choice@1.5.2">
+          <name>ENVS</name>
+          <description>Environment</description>
+          <randomName>choice-parameter-238800141347275</randomName>
+          <visibleItemCount>1</visibleItemCount>
+          <script class="org.biouno.unochoice.model.GroovyScript">
+            <secureScript plugin="script-security@1.27">
+              <script>def envslist = &apos;knife environment list&apos;
+return envslist.execute().text.tokenize()</script>
+              <sandbox>false</sandbox>
+            </secureScript>
+            <secureFallbackScript plugin="script-security@1.27">
+              <script></script>
+              <sandbox>false</sandbox>
+            </secureFallbackScript>
+          </script>
+          <projectName>task7param</projectName>
+          <choiceType>PT_SINGLE_SELECT</choiceType>
+          <filterable>false</filterable>
+        </org.biouno.unochoice.ChoiceParameter>
+        <org.biouno.unochoice.ChoiceParameter plugin="uno-choice@1.5.2">
+          <name>RLS</name>
+          <description>Role</description>
+          <randomName>choice-parameter-248586622199515</randomName>
+          <visibleItemCount>1</visibleItemCount>
+          <script class="org.biouno.unochoice.model.GroovyScript">
+            <secureScript plugin="script-security@1.27">
+              <script>def rolslist = &quot;knife role list&quot;
+return rolslist.execute().text.tokenize()</script>
+              <sandbox>false</sandbox>
+            </secureScript>
+            <secureFallbackScript plugin="script-security@1.27">
+              <script></script>
+              <sandbox>false</sandbox>
+            </secureFallbackScript>
+          </script>
+          <projectName>task7param</projectName>
+          <choiceType>PT_SINGLE_SELECT</choiceType>
+          <filterable>false</filterable>
+        </org.biouno.unochoice.ChoiceParameter>
+        <com.seitenbau.jenkins.plugins.dynamicparameter.StringParameterDefinition plugin="dynamicparameter@0.2.0">
+          <name>VRS</name>
+          <description>Version</description>
+          <__uuid>6bdb708e-2986-42d4-bf48-3b76944e3da0</__uuid>
+          <__remote>false</__remote>
+          <__script></__script>
+          <__localBaseDirectory serialization="custom">
+            <hudson.FilePath>
+              <default>
+                <remote>/var/lib/jenkins/dynamic_parameter/classpath</remote>
+              </default>
+              <boolean>true</boolean>
+            </hudson.FilePath>
+          </__localBaseDirectory>
+          <__remoteBaseDirectory>dynamic_parameter_classpath</__remoteBaseDirectory>
+          <__classPath></__classPath>
+          <readonlyInputField>false</readonlyInputField>
+        </com.seitenbau.jenkins.plugins.dynamicparameter.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers/>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.28">
+    <script>#!groovy
+def chef_repo = &quot;/vagrant/chef-repo&quot;
+def chef_recipe = &quot;run_container&quot;
+def git_repo = &quot;ksandrmatveyev/gradle-training.git&quot;
+def git_branch = &quot;task7_test&quot;
+def jenkins_url = &quot;http://172.20.20.31:8080&quot;
+node(&apos;master&apos;){
+    stage(&apos;Check Params&apos;){
+        echo ENVS
+        echo RLS
+        echo VRS
+        sh &quot;knife search \&quot;chef_environment:${ENVS} and role:${RLS}\&quot;&quot;
+    }
+    stage(&apos;Update Cookbook Files&apos;){
+        sh &quot;sed -i &apos;/\&quot;${chef_recipe}\&quot;:/c\\\&quot;${chef_recipe}\&quot;: \&quot;= $VRS\&quot;&apos; ${chef_repo}/environments/${ENVS}.json&quot;
+        sh &quot;sed -i \&quot;/version /c\\version \&apos;\&quot;$VRS\&quot;\&apos;\&quot; ${chef_repo}/cookbooks/${chef_recipe}/metadata.rb&quot;
+        sh &quot;sed -i \&quot;/image_version/c\\default[&apos;image_version&apos;]=\&apos;\&quot;$VRS\&quot;\&apos;\&quot; ${chef_repo}/cookbooks/${chef_recipe}/attributes/default.rb&quot;
+        sh &quot;cat ${chef_repo}/environments/${ENVS}.json&quot;
+        sh &quot;cat ${chef_repo}/cookbooks/${chef_recipe}/metadata.rb&quot;
+        sh &quot;cat ${chef_repo}/cookbooks/${chef_recipe}/attributes/default.rb&quot;
+    }
+    stage(&apos;Update Chef-server&apos;){
+        sh &quot;berks install -b ${chef_repo}/cookbooks/${chef_recipe}/Berksfile &amp;&amp; berks upload -b ${chef_repo}/cookbooks/${chef_recipe}/Berksfile&quot;
+        sh &quot;knife environment from file ${chef_repo}/environments/${ENVS}.json&quot;
+    }
+    stage(&apos;Push to Github&apos;){
+        withCredentials([usernamePassword(credentialsId: &apos;github_cred&apos;, passwordVariable: &apos;GIT_PASSWORD&apos;, usernameVariable: &apos;GIT_USERNAME&apos;)]) {
+            git branch: &quot;${git_branch}&quot;, credentialsId: &apos;github_cred&apos;, url: &quot;https://github.com/${git_repo}&quot;
+            withCredentials([usernamePassword(credentialsId: &apos;jenkins_cred&apos;, passwordVariable: &apos;JENKINS_PASSWORD&apos;, usernameVariable: &apos;JENKINS_USERNAME&apos;)]) {
+                sh &quot;curl -u $JENKINS_USERNAME:$JENKINS_PASSWORD ${jenkins_url}/job/${env.JOB_NAME}/config.xml &gt; ${env.JOB_NAME}.xml&quot;
+            }
+            sh &quot;cp -R ${chef_repo} .&quot;
+            sh(&apos;git config --global user.name &quot;Aleksandr Matveyev&quot;&apos;)
+            sh(&apos;git config --global user.email ksandr.matveyev@gmail.com&apos;)
+            sh(&quot;git add -A &amp;&amp; git commit -am \&quot;from Jenkins. Cookbook build - ${VRS}\&quot;&quot;)
+            sh(&quot;git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${git_repo} ${git_branch}&quot;) 
+        }
+    }
+    stage(&apos;Run Chef-client&apos;){
+        withCredentials([usernamePassword(credentialsId: &apos;node_cred&apos;, passwordVariable: &apos;NODE_PASSWORD&apos;, usernameVariable: &apos;NODE_USERNAME&apos;)]) {
+            sh &quot;knife search \&quot;chef_environment:${ENVS} and role:${RLS}\&quot; -i&quot;
+            sh &quot;knife ssh \&quot;chef_environment:${ENVS} AND role:${RLS}\&quot; \&quot;sudo chef-client\&quot; -x ${NODE_USERNAME} -P ${NODE_PASSWORD}&quot;
+        }
+    }
+}</script>
+    <sandbox>false</sandbox>
+  </definition>
+  <triggers/>
+</flow-definition>

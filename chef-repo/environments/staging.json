@@ -1,0 +1,15 @@
+{
+  "name": "staging",
+  "description": "Staging Chef environment",
+  "cookbook_versions": {
+"run_container": "= 3.2.7"
+  },
+  "json_class": "Chef::Environment",
+  "chef_type": "environment",
+  "default_attributes": {
+
+  },
+  "override_attributes": {
+
+  }
+}
