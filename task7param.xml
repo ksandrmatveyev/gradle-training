@@ -49,7 +49,7 @@ return rolslist.execute().text.tokenize()</script>
         <com.seitenbau.jenkins.plugins.dynamicparameter.StringParameterDefinition plugin="dynamicparameter@0.2.0">
           <name>VRS</name>
           <description>Version</description>
-          <__uuid>a99c60d3-9962-4efd-ac37-63fcc0d899a2</__uuid>
+          <__uuid>5bacab2e-842f-48d6-b4f8-396556e425e3</__uuid>
           <__remote>false</__remote>
           <__script></__script>
           <__localBaseDirectory serialization="custom">
@@ -99,7 +99,7 @@ node(&apos;master&apos;){
             withCredentials([usernamePassword(credentialsId: &apos;jenkins_cred&apos;, passwordVariable: &apos;JENKINS_PASSWORD&apos;, usernameVariable: &apos;JENKINS_USERNAME&apos;)]) {
                 sh &quot;curl -u $JENKINS_USERNAME:$JENKINS_PASSWORD http://172.20.20.31:8080/job/task7param/config.xml &gt; task7param.xml&quot;
             }
-            sh &quot;cp -Rf /vagrant/chef-repo .&quot;
+            sh &quot;cp -Rf /vagrant/chef-repo ./chef-repo&quot;
             sh(&apos;git config --global user.name &quot;Aleksandr Matveyev&quot;&apos;)
             sh(&apos;git config --global user.email ksandr.matveyev@gmail.com&apos;)
             sh(&quot;git add -A &amp;&amp; git commit -am \&quot;from Jenkins. Cookbook build - ${VRS}\&quot;&quot;)
