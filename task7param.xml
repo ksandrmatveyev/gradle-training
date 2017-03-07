@@ -49,7 +49,7 @@ return rolslist.execute().text.tokenize()</script>
         <com.seitenbau.jenkins.plugins.dynamicparameter.StringParameterDefinition plugin="dynamicparameter@0.2.0">
           <name>VRS</name>
           <description>Version</description>
-          <__uuid>f41c2605-78df-4809-a017-c68159419963</__uuid>
+          <__uuid>3791bb40-d612-4a3a-8ab2-2873fc084107</__uuid>
           <__remote>false</__remote>
           <__script></__script>
           <__localBaseDirectory serialization="custom">
@@ -73,6 +73,7 @@ return rolslist.execute().text.tokenize()</script>
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.28">
     <script>#!groovy
 def chef_repo = &quot;/vagrant/chef-repo&quot;
+def chef_recipe = &quot;run_container&quot;
 def git_repo = &quot;ksandrmatveyev/gradle-training.git&quot;
 def git_branch = &quot;task7_test&quot;
 def jenkins_url = &quot;http://172.20.20.31:8080&quot;
@@ -84,25 +85,24 @@ node(&apos;master&apos;){
         sh &quot;knife search \&quot;chef_environment:${ENVS} and role:${RLS}\&quot;&quot;
     }
     stage(&apos;Update Cookbook Files&apos;){
-        sh &quot;sed -i &apos;/\&quot;run_container\&quot;:/c\\\&quot;run_container\&quot;: \&quot;= $VRS\&quot;&apos; ${chef_repo}/environments/${ENVS}.json&quot;
-        sh &quot;sed -i \&quot;/version /c\\version \&apos;\&quot;$VRS\&quot;\&apos;\&quot; ${chef_repo}/cookbooks/run_container/metadata.rb&quot;
-        sh &quot;sed -i \&quot;/image_version/c\\default[&apos;image_version&apos;]=\&apos;\&quot;$VRS\&quot;\&apos;\&quot; ${chef_repo}/cookbooks/run_container/attributes/default.rb&quot;
+        sh &quot;sed -i &apos;/\&quot;${chef_recipe}\&quot;:/c\\\&quot;${chef_recipe}\&quot;: \&quot;= $VRS\&quot;&apos; ${chef_repo}/environments/${ENVS}.json&quot;
+        sh &quot;sed -i \&quot;/version /c\\version \&apos;\&quot;$VRS\&quot;\&apos;\&quot; ${chef_repo}/cookbooks/${chef_recipe}/metadata.rb&quot;
+        sh &quot;sed -i \&quot;/image_version/c\\default[&apos;image_version&apos;]=\&apos;\&quot;$VRS\&quot;\&apos;\&quot; ${chef_repo}/cookbooks/${chef_recipe}/attributes/default.rb&quot;
         sh &quot;cat ${chef_repo}/environments/${ENVS}.json&quot;
-        sh &quot;cat ${chef_repo}/cookbooks/run_container/metadata.rb&quot;
-        sh &quot;cat ${chef_repo}/cookbooks/run_container/attributes/default.rb&quot;
+        sh &quot;cat ${chef_repo}/cookbooks/${chef_recipe}/metadata.rb&quot;
+        sh &quot;cat ${chef_repo}/cookbooks/${chef_recipe}/attributes/default.rb&quot;
     }
     stage(&apos;Update Chef-server&apos;){
-        sh &quot;berks install -b ${chef_repo}/cookbooks/run_container/Berksfile &amp;&amp; berks upload -b ${chef_repo}/cookbooks/run_container/Berksfile&quot;
+        sh &quot;berks install -b ${chef_repo}/cookbooks/${chef_recipe}/Berksfile &amp;&amp; berks upload -b ${chef_repo}/cookbooks/${chef_recipe}/Berksfile&quot;
         sh &quot;knife environment from file ${chef_repo}/environments/${ENVS}.json&quot;
     }
     stage(&apos;Push to Github&apos;){
         withCredentials([usernamePassword(credentialsId: &apos;github_cred&apos;, passwordVariable: &apos;GIT_PASSWORD&apos;, usernameVariable: &apos;GIT_USERNAME&apos;)]) {
             git branch: &quot;${git_branch}&quot;, credentialsId: &apos;github_cred&apos;, url: &quot;https://github.com/${git_repo}&quot;
             withCredentials([usernamePassword(credentialsId: &apos;jenkins_cred&apos;, passwordVariable: &apos;JENKINS_PASSWORD&apos;, usernameVariable: &apos;JENKINS_USERNAME&apos;)]) {
-                sh &quot;curl -u $JENKINS_USERNAME:$JENKINS_PASSWORD ${jenkins_url}/job/task7param/config.xml &gt; task7param.xml&quot;
+                sh &quot;curl -u $JENKINS_USERNAME:$JENKINS_PASSWORD ${jenkins_url}/job/${env.JOB_NAME}/config.xml &gt; ${env.JOB_NAME}.xml&quot;
             }
-            echo env.JOB_NAME
-            sh &quot;cp -R /vagrant/chef-repo .&quot;
+            sh &quot;cp -R ${chef_repo} .&quot;
             sh(&apos;git config --global user.name &quot;Aleksandr Matveyev&quot;&apos;)
             sh(&apos;git config --global user.email ksandr.matveyev@gmail.com&apos;)
             sh(&quot;git add -A &amp;&amp; git commit -am \&quot;from Jenkins. Cookbook build - ${VRS}\&quot;&quot;)
