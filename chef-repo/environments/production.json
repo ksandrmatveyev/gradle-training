@@ -2,7 +2,7 @@
   "name": "production",
   "description": "Production Chef environment",
   "cookbook_versions": {
-"run_container": "= 3.1.2"
+"run_container": "= 3.2.6"
   },
   "json_class": "Chef::Environment",
   "chef_type": "environment",
